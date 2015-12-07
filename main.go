@@ -24,7 +24,6 @@ const (
 
 var (
 	cli *redis.Client
-	url = `http://www.thepaper.cn/load_index.jsp?nodeids=25990&topCids=&pageidx=`
 )
 
 func main() {
@@ -36,11 +35,12 @@ func main() {
 
 	log.Println("start...")
 	for i := 0; i < 13; i++ {
-		DownloadCards(url, i)
+		DownloadCards(i)
 	}
 }
 
-func DownloadCards(url string, page int) {
+func DownloadCards(page int) {
+	url := `http://www.thepaper.cn/load_index.jsp?nodeids=25990&topCids=&pageidx=`
 	doc, err := goquery.NewDocument(fmt.Sprint(url, page))
 	if err != nil {
 		log.Fatal(err)
@@ -94,8 +94,10 @@ func DownloadCards(url string, page int) {
 }
 
 func FormatDate(str string) time.Time {
-	if t, err := time.Parse("2006-01-2", str); err == nil {
-		return t
+	if len(str) >= 10 {
+		if t, err := time.Parse("2006-01-2", str[:10]); err == nil {
+			return t
+		}
 	}
 	if h := strings.LastIndex(str, "小时前"); h > 0 {
 		if hour, err := strconv.Atoi(str[:h]); err == nil {
@@ -113,7 +115,7 @@ func FormatDate(str string) time.Time {
 
 func DownloadContent(key, href string) {
 	url := "http://www.thepaper.cn/" + href
-	doc, err := goquery.NewDocument(fmt.Sprint(url, page))
+	doc, err := goquery.NewDocument(url)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -122,7 +124,7 @@ func DownloadContent(key, href string) {
 		txt := s1.Text()
 		imgs := make([]string, 0)
 		s1.Find("img").Each(func(j int, s2 *goquery.Selection) {
-			if src, err := s2.Attr("src"); err == nil {
+			if src, ok := s2.Attr("src"); ok {
 				imgs = append(imgs, src)
 			}
 		})
