@@ -19,6 +19,7 @@ const (
 	R_PP_TITLE        = "title"
 	R_PP_SUMMARY      = "summary"
 	R_PP_CONTENT      = "content"
+	R_PP_CONTENT_HTML = "content_html"
 	R_PP_CONTENT_IMGS = "content_imgs"
 )
 
@@ -122,6 +123,10 @@ func DownloadContent(key, href string) {
 	log.Println("downlaod content over.")
 	doc.Find(".news_txt").Each(func(i int, s1 *goquery.Selection) {
 		txt := s1.Text()
+		html, err := s1.Html()
+		if err != nil {
+			log.Println(err)
+		}
 		imgs := make([]string, 0)
 		s1.Find("img").Each(func(j int, s2 *goquery.Selection) {
 			if src, ok := s2.Attr("src"); ok {
@@ -129,6 +134,7 @@ func DownloadContent(key, href string) {
 			}
 		})
 		cli.HSet(key, R_PP_CONTENT, txt)
+		cli.HSet(key, R_PP_CONTENT_HTML, html)
 		cli.HSet(key, R_PP_CONTENT_IMGS, strings.Join(imgs, ","))
 		log.Println("get content over...")
 	})
